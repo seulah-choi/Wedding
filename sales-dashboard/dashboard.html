@@ -535,10 +535,14 @@ function renderAll() {
   renderFilters(); renderKpis(); renderGrowth(); renderCombo(); renderDonut(); renderClients();
 }
 
-function load(raw, label) {
+function load(raw, label, keep) {
   try {
+    const prev = DATA ? { q: S.quarter, last: DATA.quarters.at(-1) } : null;
     DATA = buildData(raw);
-    S.quarter = DATA.quarters.at(-1); S.team = ALL; S.member = ALL;
+    // 새로고침 시 선택한 필터 유지 (값이 사라졌으면 초기화)
+    if (!keep || !prev || prev.q === prev.last || !DATA.quarters.includes(S.quarter)) S.quarter = DATA.quarters.at(-1);
+    if (!keep || (S.team !== ALL && !DATA.teams.includes(S.team))) { S.team = ALL; S.member = ALL; }
+    if (S.member !== ALL && !DATA.rows.some(r => r.member === S.member && (S.team === ALL || r.team === S.team))) S.member = ALL;
     $('src').textContent = `${label} · ${DATA.rows.length.toLocaleString()}행 · ${ymLabel(DATA.months[0])} ~ ${ymLabel(DATA.months.at(-1))}`;
     $('err').style.display = 'none';
     renderAll();
@@ -593,7 +597,31 @@ document.addEventListener('mousemove', e => {
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change', renderAll);
 new MutationObserver(renderAll).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
 
-if (window.SAMPLE_ROWS) load(window.SAMPLE_ROWS, '샘플 데이터 (sales_data.xlsx)');
+// ---------- 구글 시트 연동 (Apps Script 웹앱으로 배포된 경우) ----------
+const GAS = window.google && google.script && google.script.run;
+function loadFromSheet(keep) {
+  $('src').textContent = '구글 시트에서 불러오는 중…';
+  $('btnSample').disabled = true;
+  google.script.run
+    .withSuccessHandler(res => {
+      $('btnSample').disabled = false;
+      const rows = res.rows.map(r => Object.fromEntries(res.header.map((h, i) => [h, r[i]])));
+      load(rows, `구글 시트 「${res.name}」 · ${res.fetchedAt} 기준`, keep);
+    })
+    .withFailureHandler(err => {
+      $('btnSample').disabled = false;
+      $('src').textContent = '구글 시트 연결 실패';
+      $('err').textContent = '구글 시트를 읽을 수 없습니다: ' + (err && err.message || err) + ' — 시트 보기 권한이 있는지 확인하세요.';
+      $('err').style.display = 'block';
+    })
+    .getData();
+}
+if (GAS) {
+  $('btnLoad').hidden = true;                // 웹앱에서는 시트가 원본
+  $('btnSample').textContent = '새로고침';
+  $('btnSample').onclick = () => loadFromSheet(true);
+  loadFromSheet(false);
+} else if (window.SAMPLE_ROWS) load(window.SAMPLE_ROWS, '샘플 데이터 (sales_data.xlsx)');
 else { $('err').textContent = '샘플 데이터가 없습니다. "엑셀 불러오기"로 파일을 선택하세요.'; $('err').style.display = 'block'; }
 })();
 </script>

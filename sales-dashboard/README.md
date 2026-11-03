@@ -6,8 +6,19 @@
 | `dashboard.html` | 대시보드. 브라우저로 열면 샘플 데이터가 바로 표시됨 |
 | `sample_data.js` | 대시보드가 기본으로 띄우는 샘플 데이터 (xlsx와 동일) |
 | `generate_sample.py` | 샘플 데이터 재생성 스크립트 (`python3 generate_sample.py`) |
+| `sheet_template.xlsx` | 실제 데이터 입력용 빈 양식 (헤더만 있음) |
+| `apps-script/` | 구글 시트 연동 웹앱 코드 (`Code.gs`, `index.html`) |
+| `build_apps_script.py` | `dashboard.html` → `apps-script/index.html` 변환 |
+| `SETUP_GOOGLE.md` | **구글 시트 연동 · 팀 공유 설정 가이드** |
+
+> ⚠️ 실제 매출 데이터는 이 저장소에 올리지 마세요. 실데이터는 회사 구글 시트에만 두고,
+> 대시보드는 `SETUP_GOOGLE.md` 대로 Apps Script 웹앱으로 공유합니다.
 
 ## 실제 데이터 쓰는 법
+
+**팀 공유용 (권장)** → [`SETUP_GOOGLE.md`](SETUP_GOOGLE.md) 참고: 구글 시트 + 링크 공유
+
+**혼자 파일로 볼 때**
 1. 엑셀에 아래 컬럼으로 월별 판매 데이터를 정리 (시트 이름 `RawData` 권장, 없으면 첫 시트 사용)
    `연월 | 팀 | 담당자 | 거래처 | 제품 | 수량 | 매출액`
    - 연월: `2026-09`, `2026.09`, `202609`, 날짜 모두 인식
