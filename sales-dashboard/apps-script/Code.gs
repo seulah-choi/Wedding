@@ -8,7 +8,8 @@
  */
 
 var SHEET_NAME = 'RawData';   // 데이터 시트 이름. 없으면 첫 번째 시트를 사용
-var REQUIRED = ['연월', '팀', '담당자', '거래처', '제품', '매출액'];
+// 필수 컬럼. 배열이면 그중 하나만 있으면 됨 (금액 컬럼은 '공급가액' 기준, 예전 이름 '매출액'도 허용)
+var REQUIRED = ['연월', '팀', '담당자', '거래처', '제품', ['공급가액', '매출액']];
 
 function doGet() {
   return HtmlService.createHtmlOutputFromFile('index')
@@ -24,7 +25,9 @@ function getData() {
   if (values.length < 2) throw new Error('「' + sheet.getName() + '」 시트에 데이터가 없습니다.');
 
   var header = values[0].map(function (h) { return String(h).trim(); });
-  var missing = REQUIRED.filter(function (c) { return header.indexOf(c) < 0; });
+  var missing = REQUIRED.filter(function (c) {
+    return [].concat(c).every(function (name) { return header.indexOf(name) < 0; });
+  }).map(function (c) { return [].concat(c)[0]; });
   if (missing.length) throw new Error('필수 컬럼이 없습니다: ' + missing.join(', '));
 
   var tz = ss.getSpreadsheetTimeZone();
